@@ -1,7 +1,6 @@
 **Draggable Banner**
 ====================
 
-----------
 A banner can be dragged 
 
 SAMPLE:
@@ -12,15 +11,11 @@ SAMPLE:
 
 Gradle
 ------
-----------
-In your project
+In your project:
 > compile project(':draggablebanner')
 
 USAGE:
 -------
-
-
-----------
 
 
     <com.yo.draggablebanner.ui.Banner
@@ -36,14 +31,13 @@ USAGE:
 
 > Banner mBanner = (Banner) findViewById(R.id.banner);
 > mBanner.setBannerData(mItems);
+> 
 > //get changed data...
 > List<BannerItem> banners = mBanner.obtainChangedBanners();
 
 More: app
 
 ## THANKS: ##
-
-----------
 
  - CircleIndicator
  - Android-ItemTouchHelper-Demo
