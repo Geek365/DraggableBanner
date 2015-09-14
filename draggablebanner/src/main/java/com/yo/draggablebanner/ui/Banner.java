@@ -38,7 +38,7 @@ public class Banner extends RelativeLayout implements OnStartDragListener, ViewP
     /**
      * Banner轮播默认定时时间
      */
-    private static final int DEFAULT_DELAY_TIME = 2500;
+    private static final int DEFAULT_DELAY_TIME = 2000;
     /**
      * Banner轮播默认延迟时间
      */
@@ -177,6 +177,10 @@ public class Banner extends RelativeLayout implements OnStartDragListener, ViewP
 
     private RecyclerListAdapter mRecyclerListAdapter;
 
+    private float startX;
+
+    private float endX;
+
 
     public Banner(Context context) {
         super(context);
@@ -214,11 +218,11 @@ public class Banner extends RelativeLayout implements OnStartDragListener, ViewP
         mBannerWidth = typedArray.getDimensionPixelSize(R.styleable.Banner_banner_width, DEFAULT_BANNER_WIDTH);
         mBannerHeight = typedArray.getDimensionPixelSize(R.styleable.Banner_banner_height, dip2px(DEFAULT_BANNER_HEIGHT));
         mThumSize = typedArray.getDimensionPixelSize(R.styleable.Banner_banner_thum_size, dip2px(DEFAULT_BANNER_THUM_SIZE));
-        mThumBgColor = typedArray.getDimensionPixelSize(R.styleable.Banner_banner_thum_background_color, DEFAULT_BANNER_THUM_BACKGROUND);
+        mThumBgColor = typedArray.getColor(R.styleable.Banner_banner_thum_background_color, DEFAULT_BANNER_THUM_BACKGROUND);
         mPeriodTime = typedArray.getInt(R.styleable.Banner_banner_period_time, DEFAULT_PERIOD_TIME);
         mDelayTime = typedArray.getInt(R.styleable.Banner_banner_delay_time, DEFAULT_DELAY_TIME);
         mGravity = typedArray.getInt(R.styleable.Banner_indicator_gravity, 1);
-        mIsPlay = typedArray.getBoolean(R.styleable.Banner_banner_play_enable,false);
+        mIsPlay = typedArray.getBoolean(R.styleable.Banner_banner_play_enable, false);
         switch (mGravity) {
             case 0:
                 mIndicatorGravity = CircleIndicator.IndicatorGravity.LEFT;
@@ -243,7 +247,7 @@ public class Banner extends RelativeLayout implements OnStartDragListener, ViewP
     /**
      * 获取转换后的图像列表
      */
-    public List<BannerItem> obtainChangedBanners(){
+    public List<BannerItem> obtainChangedBanners() {
         return this.mBanners;
     }
 
@@ -285,10 +289,17 @@ public class Banner extends RelativeLayout implements OnStartDragListener, ViewP
      *
      * @param banners Banner数据
      */
-    public void setBannerData(List<BannerItem> banners) {
-        this.mBanners = banners;
-        removeAllViews();
-        initView();
+    public void setBannerData(List<BannerItem> banners) throws Exception {
+        if (banners == null && banners.size() == 0) {
+            throw new NullPointerException("The banners must be not null,and size > 0");
+        }
+        if (banners.size() > 5) {
+            throw new Exception("The banners must be size <= 5");
+        } else {
+            this.mBanners = banners;
+            removeAllViews();
+            initView();
+        }
     }
 
 
@@ -339,6 +350,18 @@ public class Banner extends RelativeLayout implements OnStartDragListener, ViewP
         mCircleIndicator.setViewPager(mViewPager);
 
         startPlayBanner();
+
+        mTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                post(new Runnable() {
+                    @Override
+                    public void run() {
+                        onPageSelected(mViewPager.getCurrentItem());
+                    }
+                });
+            }
+        }, 500);
     }
 
     private void initViewPager(ViewPager viewPager) {
@@ -354,6 +377,7 @@ public class Banner extends RelativeLayout implements OnStartDragListener, ViewP
                 } else if (action == MotionEvent.ACTION_UP) {
                     isUserTouched = false;
                 }
+
                 return false;
             }
         });
@@ -361,7 +385,6 @@ public class Banner extends RelativeLayout implements OnStartDragListener, ViewP
     }
 
     private void initRecyclerTouch(RecyclerView recyclerView) {
-        //mDraggableGrid.addItemDecoration(new DividerItemDecoration(context,DividerItemDecoration.VERTICAL_LIST));
         mRecyclerListAdapter = new RecyclerListAdapter(context, this);
         recyclerView.setAdapter(mRecyclerListAdapter);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(context, mBanners.size());
@@ -391,12 +414,15 @@ public class Banner extends RelativeLayout implements OnStartDragListener, ViewP
 
     @Override
     public void onPageSelected(int position) {
-//        Log.d("FUCK", "onPageSelected" + position);
         RelativeLayout fromView = (RelativeLayout) mDraggableGrid.getChildAt(mFromPosition);
-        fromView.setBackgroundColor(0);
+        if (fromView != null) {
+            fromView.setBackgroundColor(0);
+        }
 
         RelativeLayout toView = (RelativeLayout) mDraggableGrid.getChildAt(position);
-        toView.setBackgroundColor(mThumBgColor);
+        if (toView != null) {
+            toView.setBackgroundColor(mThumBgColor);
+        }
         mFromPosition = position;
         mRecyclerListAdapter.notifyDataSetChanged();
     }
@@ -405,6 +431,7 @@ public class Banner extends RelativeLayout implements OnStartDragListener, ViewP
     public void onPageScrollStateChanged(int state) {
 
     }
+
 
     private class PlayTimerTask extends TimerTask {
 
@@ -425,7 +452,6 @@ public class Banner extends RelativeLayout implements OnStartDragListener, ViewP
                 });
             }
         }
-
     }
 
     private class BannerPagerAdapter extends PagerAdapter {
@@ -464,13 +490,12 @@ public class Banner extends RelativeLayout implements OnStartDragListener, ViewP
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
             try {
-                container.addView(mImages[position % mImages.length], 0);
+                container.addView(mImages[position], 0);
             } catch (Exception e) {
                 //TODO
             }
-            return mImages[position % mImages.length];
+            return mImages[position];
         }
-
     }
 
 
@@ -502,7 +527,6 @@ public class Banner extends RelativeLayout implements OnStartDragListener, ViewP
                     if (MotionEventCompat.getActionMasked(event) == MotionEvent.ACTION_DOWN) {
                         mToPosition = position;
                         mDragStartListener.onStartDrag(holder);
-//                        Log.d("FUCK", "pos : " + position);
                     }
 
                     return false;
@@ -512,16 +536,13 @@ public class Banner extends RelativeLayout implements OnStartDragListener, ViewP
 
         @Override
         public void onItemDismiss(int position) {
-//            Log.d("FUCK", "onItemDismiss" + " miss position:" + position);
             mBanners.remove(position);
             notifyItemRemoved(position);
         }
 
         @Override
         public boolean onItemMove(int fromPosition, int toPosition) {
-//            Log.d("FUCK", "onItemMove" + " from position:" + fromPosition + " to position:" + toPosition);
             Collections.swap(mBanners, fromPosition, toPosition);
-
             notifyItemMoved(fromPosition, toPosition);
             mFromPosition = fromPosition;
             mToPosition = toPosition;
@@ -551,7 +572,6 @@ public class Banner extends RelativeLayout implements OnStartDragListener, ViewP
 
             @Override
             public void onItemSelected() {
-//                Log.d("FUCK", "onItemSelected" + "  from position:" + mFromPosition);
                 stopPlayBanner();
                 RelativeLayout fromRelative = (RelativeLayout) mDraggableGrid.getChildAt(mFromPosition);
                 fromRelative.setBackgroundColor(0);
@@ -560,7 +580,6 @@ public class Banner extends RelativeLayout implements OnStartDragListener, ViewP
 
             @Override
             public void onItemClear() {
-//                Log.d("FUCK", "onItemClear" + "  to position:" + mToPosition);
                 itemView.setBackgroundColor(0);
                 mBannerPagerAdapter = new BannerPagerAdapter();
                 mViewPager.setAdapter(mBannerPagerAdapter);

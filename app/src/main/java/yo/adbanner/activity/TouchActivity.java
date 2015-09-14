@@ -31,7 +31,11 @@ public class TouchActivity extends AppCompatActivity {
         initData();
         mBanner = (Banner) findViewById(R.id.banner);
         mText = (TextView) findViewById(R.id.textView);
-        mBanner.setBannerData(mItems);
+        try {
+            mBanner.setBannerData(mItems);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void obtain(View view) {

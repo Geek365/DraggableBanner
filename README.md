@@ -19,12 +19,15 @@ USAGE:
 
 
     <com.yo.draggablebanner.ui.Banner
-        android:id="@+id/banner"
-        app:banner_play_enable="true"
-        app:banner_delay_time="2000"
-        app:banner_period_time="1500"
-        android:layout_width="match_parent"
-        android:layout_height="300dp" />
+            android:id="@+id/banner"
+            app:banner_play_enable="true"
+            app:banner_delay_time="2000"
+            app:banner_period_time="2000"
+            app:banner_thum_background_color="#cbccca"
+            app:indicator_drawable="@drawable/test_grey_radius"
+            app:indicator_drawable_unselected="@drawable/test_white_radius"
+            android:layout_width="match_parent"
+            android:layout_height="300dp" />
 
   
   
